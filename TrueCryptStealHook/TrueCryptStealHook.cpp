@@ -131,59 +131,34 @@ BOOL FullModuleNameIsTrueModuleName(LPWCH moduleName, LPWCH trueModuleName, int 
 	return TRUE;
 }
 
-BOOL GetFunctionAddressInProcessMemory(HANDLE hProc, LPVOID base, DWORD size, LPVOID &functionAddress, PBYTE bytes, int countBytes)
+BOOL GetFunctionAddressInProcessMemory(HANDLE hProc, LPVOID base, DWORD size, LPVOID &functionAddress, PBYTE bytes, size_t countBytes)
 {
 	SIZE_T bytesRead = 0;
-	PBYTE currentMemPos = (PBYTE)base;
+	PBYTE memStartPos = (PBYTE)base;
 	int currentBytesPos = 0;
-	int countBytesNeedRead = countBytes;
-	int offsetBufferPos = 0;
 
-	PBYTE save_buffer = (PBYTE)LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, countBytes * 2);
-	PBYTE buffer = save_buffer + countBytes;
-
-	while (countBytesNeedRead == countBytes)
+	for (size_t i = 0; i < (size - countBytes + 1); ++i)
 	{
-		countBytesNeedRead = min((int)((PBYTE)base + size - currentMemPos), countBytes);
-		if (ReadProcessMemory(hProc, currentMemPos, buffer, countBytesNeedRead, &bytesRead) == NULL || bytesRead == 0)
+		for (size_t j = i; j < (i + countBytes); ++j)
 		{
-			LocalFree(save_buffer);
-			return FALSE;
-		}
-
-		for (size_t i = offsetBufferPos; i < bytesRead; ++i)
-		{
-			for (size_t j = i; j < bytesRead + min(0, i); ++j)
+			if (memStartPos[j] == bytes[currentBytesPos])
 			{
-				if (buffer[j] == bytes[currentBytesPos])
-				{
-					++currentBytesPos;
+				++currentBytesPos;
 
-					if (currentBytesPos == countBytes - 1)
-					{
-						functionAddress = currentMemPos + i;
-						LocalFree(save_buffer);
-						return TRUE;
-					}
-				}
-				else
+				if (currentBytesPos == countBytes - 1)
 				{
-					currentBytesPos = 0;
-					break;
+					functionAddress = memStartPos + i;
+					return TRUE;
 				}
 			}
-
-			if (currentBytesPos != 0)
+			else
 			{
-				CopyMemory(save_buffer, buffer, countBytes);
-				offsetBufferPos = i - countBytes + 1;
 				break;
 			}
 		}
 
-		currentMemPos += countBytes;
+		currentBytesPos = 0;
 	}
 
-	LocalFree(save_buffer);
 	return FALSE;
 }
