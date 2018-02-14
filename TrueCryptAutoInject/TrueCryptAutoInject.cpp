@@ -104,8 +104,6 @@ BOOL InjectProc(DWORD pid, HMODULE hModuleLibrary, int size_of_module)
 				HANDLE thread = CreateRemoteThread(process, NULL, 0, (LPTHREAD_START_ROUTINE)((PBYTE)alloc + *address_of_entry_point), alloc, 0, NULL);
 				if (thread != NULL)
 				{
-					//WaitForSingleObject(thread, INFINITE);
-					
 					CloseHandle(thread);
 					CloseHandle(process);
 					return TRUE;
